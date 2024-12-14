@@ -6,13 +6,34 @@ import pandas as pd
 
 pd.set_option('display.max_columns', 50)
 
+cols_to_store = [
+    'flight',
+    'r',
+    'type',
+    'desc',
+    'nav_qnh',
+    'nav_altitude_mcp',
+    'lat',
+    'lon',
+    'alt_baro',
+    'alt_geom',
+    'gs',
+    'track',
+    'baro_rate',
+    'now'
+]
+
 # %%
 while True:
     for aircraft in ['N270LE','N801PR', 'N45JE']:
         with requests.Session() as s:
-            result = s.get(
-                f'https://opendata.adsb.fi/api/v2/callsign/{aircraft}'
-            )
+            try:
+                result = s.get(
+                    f'https://opendata.adsb.fi/api/v2/callsign/{aircraft}'
+                )
+            except requests.exceptions.ConnectionError:
+                print('connection error.')
+                sleep(5)
         if result.status_code == 200:
             result_json = result.json()
 
@@ -27,6 +48,9 @@ while True:
                     errors='ignore'
                 )
                 df['now'] = result_json['now']
-                df.to_sql('adsb', con=liberty_jet_db, if_exists='append')
+                for col in cols_to_store:
+                    if col not in df.columns:
+                        df[col] = None
+                df[cols_to_store].to_sql('adsb', con=liberty_jet_db, if_exists='append')
                 liberty_jet_db.close()
         sleep(60)

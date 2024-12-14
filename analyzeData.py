@@ -1,6 +1,7 @@
 # %%
 import sqlite3
 import pandas as pd
+import geopandas as gpd
 
 pd.set_option('display.max_columns', 50)
 
@@ -13,4 +14,17 @@ df['now'] = df['now'].astype('datetime64[ms]')
 df.shape
 # %%
 df
+# %%
+gdf = gpd.GeoDataFrame(
+    df[['flight','desc','alt_geom','gs','track','baro_rate','squawk','lat','lon','now']], 
+    geometry=gpd.points_from_xy(
+        df.lon,
+        df.lat
+    ),
+    crs="EPSG:4326"
+)
+
+gdf.rename({'flight':'Aircraft'}, axis=1, inplace=True)
+# %%
+gdf.explore('Aircraft', cmap='Dark2')
 # %%
